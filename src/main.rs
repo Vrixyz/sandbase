@@ -1,4 +1,5 @@
 use bevy::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     input::mouse::MouseButton,
     prelude::*,
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
@@ -7,11 +8,11 @@ use bevy::{
 use std::collections::HashMap;
 
 // TODO: to be configurable
-const WORLD_VOXEL_WIDTH: usize = 10;
+const WORLD_VOXEL_WIDTH: usize = 200;
 const WORLD_VOXEL_HEIGHT: usize = 144;
 const VOXELS: usize = WORLD_VOXEL_WIDTH * WORLD_VOXEL_HEIGHT;
-const PIXEL_SIZE: usize = 10;
-const VOXEL_SIZE: f32 = 10.0;
+const PIXEL_SIZE: usize = 8;
+const VOXEL_SIZE: f32 = 8.0;
 const WORLD_PIXEL_WIDTH: usize = WORLD_VOXEL_WIDTH * PIXEL_SIZE;
 const WORLD_PIXEL_HEIGHT: usize = WORLD_VOXEL_HEIGHT * PIXEL_SIZE;
 
@@ -242,10 +243,13 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Welcome to Sandbase!".into(),
+                present_mode: PresentMode::AutoNoVsync,
                 ..default()
             }),
             ..default()
         }))
+        .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .init_resource::<VoxelManager>()
         .init_resource::<VoxelMesh>()
         .init_resource::<MouseLocScreen>()
@@ -587,7 +591,11 @@ fn get_bottom2_left_voxel(world: &GameWorld, index: usize) -> (Option<Voxel>, us
 }
 
 fn get_bottom2_right_voxel(world: &GameWorld, index: usize) -> (Option<Voxel>, usize) {
-    let right_index = index as i32 + 1 - WORLD_VOXEL_WIDTH as i32 * 2;
+    get_voxel_coord(world, index, IVec2::new(0, -2))
+}
+
+fn get_voxel_coord(world: &GameWorld, index: usize, coord_offset: IVec2) -> (Option<Voxel>, usize) {
+    let right_index = index as i32 + coord_offset.x + WORLD_VOXEL_WIDTH as i32 * coord_offset.y;
     let maybe_voxel = if right_index >= 0 {
         world.voxels[right_index as usize]
     } else {
